@@ -1,45 +1,44 @@
 "use strict";
 
-let webcam = document.getElementById('webcam');
-let canvas = document.getElementById('canvas');
-let faceDetectionInterval = null;
+const webcam_video = document.getElementById('webcam');
+const webcam_canvas = document.getElementById('canvas');
+const webcam_video_display_size = { width: webcam_video.width, height: webcam_video.height };
+var webcam_face_detection_interval = null;
 
 Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-    faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-    faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-    faceapi.nets.faceExpressionNet.loadFromUri('/models')
-]).then(startWebcam);
+    faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
+    faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
+    faceapi.nets.faceRecognitionNet.loadFromUri('./models'),
+    faceapi.nets.faceExpressionNet.loadFromUri('./models')
+]).then(start_webcam);
 
-function startWebcam() {
+function start_webcam() {
     navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => webcam.srcObject = stream)
+        .then(stream => webcam_video.srcObject = stream)
         .catch(error => console.error('Camera access not allowed!', error));
 }
 
-function stopWebcam() {
-    webcam.srcObject.getTracks()[0].stop();
+function stop_webcam() {
+    webcam_video.srcObject.getTracks()[0].stop();
 }
 
-webcam.addEventListener('play', () => {
-    const displaySize = { width: webcam.width, height: webcam.height };
-    faceapi.matchDimensions(canvas, displaySize);
+webcam_video.addEventListener('play', () => {
+    faceapi.matchDimensions(webcam_canvas, webcam_video_display_size);
 
-    faceDetectionInterval = setInterval(async () => {
+    webcam_face_detection_interval = setInterval(async () => {
         const detections = await faceapi.detectAllFaces(
-            webcam,
+            webcam_video,
             new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
             .withFaceExpressions();
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        const resized_detections = faceapi.resizeResults(detections, webcam_video_display_size);
         
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        faceapi.draw.drawDetections(canvas, resizedDetections);
-        // faceapi.draw.drawFaceLandmarks(canvasElement, resizedDetections);
-        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+        webcam_canvas.getContext('2d').clearRect(0, 0, webcam_canvas.width, webcam_canvas.height);
+        faceapi.draw.drawDetections(webcam_canvas, resized_detections);
+        faceapi.draw.drawFaceExpressions(webcam_canvas, resized_detections);
         
         // Check if the expression is "sad"
-        if(resizedDetections.length && resizedDetections[0].expressions.sad > 0.3) {
+        if(resized_detections.length && resized_detections[0].expressions.sad > 0.3) {
             // Do something when the expression is sad
             console.log('Person is sad!');
         }
@@ -47,6 +46,6 @@ webcam.addEventListener('play', () => {
 });
 
 // setTimeout(() => {
-//     stopWebcam();
-//     clearInterval(faceDetectionInterval);
+//     stop_webcam();
+//     clearInterval(webcam_face_detection_interval);
 // }, 10000);
