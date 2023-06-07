@@ -20,6 +20,7 @@ function start_webcam() {
 
 function stop_webcam() {
     webcam_video.srcObject.getTracks()[0].stop();
+    clearInterval(webcam_face_detection_interval);
 }
 
 webcam_video.addEventListener('play', () => {
@@ -47,5 +48,4 @@ webcam_video.addEventListener('play', () => {
 
 // setTimeout(() => {
 //     stop_webcam();
-//     clearInterval(webcam_face_detection_interval);
 // }, 10000);
